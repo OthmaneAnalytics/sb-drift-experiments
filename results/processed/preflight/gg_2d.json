@@ -1,9 +1,9 @@
 {
   "D_star_argmin": [
-    -2.0,
-    2.0
+    -1.5,
+    1.5
   ],
-  "D_star_min_on_eval_grid": 4.610800946559863e-05,
+  "D_star_min_on_eval_grid": 0.002285051565770161,
   "dim": 2,
   "model_id": "gg_2d",
   "name": "GG 2D",
@@ -31,5 +31,5 @@
     0.0
   ],
   "xs_density_at_xi0": 0.1785645182393409,
-  "xs_density_min_on_eval_xi_grid": 0.001983672614973744
+  "xs_density_min_on_eval_xi_grid": 0.014206505345628975
 }

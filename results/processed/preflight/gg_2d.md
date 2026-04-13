@@ -5,9 +5,9 @@
 - xi0: `[0.0, 0.0]`
 - rate_time: `0.6`
 - xs_density_at_xi0: `1.785645e-01`
-- xs_density_min_on_eval_xi_grid: `1.983673e-03`
-- D_star_min_on_eval_grid: `4.610801e-05`
-- D_star_argmin: `[-2.0, 2.0]`
+- xs_density_min_on_eval_xi_grid: `1.420651e-02`
+- D_star_min_on_eval_grid: `2.285052e-03`
+- D_star_argmin: `[-1.5, 1.5]`
 - truth_convergence_abs_err: `1.110223e-16`
 - truth_coarse: `[0.5463595323532792, -0.4525986804028248]`
 - truth_fine: `[0.5463595323532792, -0.4525986804028247]`
