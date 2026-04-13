@@ -1,0 +1,29 @@
+{
+  "D_star_argmin": [
+    -2.0
+  ],
+  "D_star_min_on_eval_grid": 0.006140076725290309,
+  "dim": 1,
+  "model_id": "gg_1d",
+  "name": "GG 1D",
+  "rate_time": 0.6,
+  "sample_mean_xs": [
+    -0.0025441947297519737
+  ],
+  "sample_mean_xu": [
+    0.2876299080813779
+  ],
+  "support_accepts_sampling": true,
+  "truth_coarse": [
+    0.6504065040650405
+  ],
+  "truth_convergence_abs_err": 0.0,
+  "truth_fine": [
+    0.6504065040650405
+  ],
+  "xi0": [
+    0.0
+  ],
+  "xs_density_at_xi0": 0.40002225892128485,
+  "xs_density_min_on_eval_xi_grid": 0.0541371257120617
+}

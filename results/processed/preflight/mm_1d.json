@@ -1,0 +1,29 @@
+{
+  "D_star_argmin": [
+    2.0
+  ],
+  "D_star_min_on_eval_grid": 0.2997735475103362,
+  "dim": 1,
+  "model_id": "mm_1d",
+  "name": "MM 1D",
+  "rate_time": 0.6,
+  "sample_mean_xs": [
+    -0.14552015795368722
+  ],
+  "sample_mean_xu": [
+    0.5888421321857961
+  ],
+  "support_accepts_sampling": true,
+  "truth_coarse": [
+    -0.47091290307229977
+  ],
+  "truth_convergence_abs_err": 0.0,
+  "truth_fine": [
+    -0.47091290307229977
+  ],
+  "xi0": [
+    0.8
+  ],
+  "xs_density_at_xi0": 0.2986354064024771,
+  "xs_density_min_on_eval_xi_grid": 0.02532521546724008
+}

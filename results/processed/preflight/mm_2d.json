@@ -1,0 +1,35 @@
+{
+  "D_star_argmin": [
+    -2.0,
+    -2.0
+  ],
+  "D_star_min_on_eval_grid": 0.0002452503673312561,
+  "dim": 2,
+  "model_id": "mm_2d",
+  "name": "MM 2D",
+  "rate_time": 0.6,
+  "sample_mean_xs": [
+    -0.12354823876469599,
+    0.13280716753496055
+  ],
+  "sample_mean_xu": [
+    0.49415532979114823,
+    -0.575717007718261
+  ],
+  "support_accepts_sampling": true,
+  "truth_coarse": [
+    -1.2065958856210606,
+    1.278216723513223
+  ],
+  "truth_convergence_abs_err": 2.220446049250313e-16,
+  "truth_fine": [
+    -1.2065958856210606,
+    1.2782167235132227
+  ],
+  "xi0": [
+    0.8,
+    -0.8
+  ],
+  "xs_density_at_xi0": 0.31158789341287385,
+  "xs_density_min_on_eval_xi_grid": 4.394139676149609e-19
+}

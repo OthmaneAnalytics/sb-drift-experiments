@@ -1,0 +1,26 @@
+project:
+  name: sb-drift-experiments
+  seed: 12345
+  output_dir: results/processed/preflight
+  all_configs:
+    - configs/gg_1d.yaml
+    - configs/gg_2d.yaml
+    - configs/mm_1d.yaml
+    - configs/mm_2d.yaml
+
+shared_defaults:
+  kernel: epanechnikov
+  support_box_1d:
+    - [-3.0, 3.0]
+  support_box_2d:
+    - [-3.0, 3.0]
+    - [-3.0, 3.0]
+  eval_box_1d:
+    - [-2.0, 2.0]
+  eval_box_2d:
+    - [-2.0, 2.0]
+    - [-2.0, 2.0]
+  interval: [0.2, 1.0]
+  rate_time: 0.6
+  truth_grid_2d_coarse: 121
+  truth_grid_2d_fine: 241

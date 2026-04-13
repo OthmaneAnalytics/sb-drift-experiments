@@ -1,0 +1,35 @@
+{
+  "D_star_argmin": [
+    -2.0,
+    2.0
+  ],
+  "D_star_min_on_eval_grid": 4.610800946559863e-05,
+  "dim": 2,
+  "model_id": "gg_2d",
+  "name": "GG 2D",
+  "rate_time": 0.6,
+  "sample_mean_xs": [
+    0.00617392426084024,
+    -0.0018881615496286032
+  ],
+  "sample_mean_xu": [
+    0.2731095035662283,
+    -0.17655299272100658
+  ],
+  "support_accepts_sampling": true,
+  "truth_coarse": [
+    0.5463595323532792,
+    -0.4525986804028248
+  ],
+  "truth_convergence_abs_err": 1.1102230246251565e-16,
+  "truth_fine": [
+    0.5463595323532792,
+    -0.4525986804028247
+  ],
+  "xi0": [
+    0.0,
+    0.0
+  ],
+  "xs_density_at_xi0": 0.1785645182393409,
+  "xs_density_min_on_eval_xi_grid": 0.001983672614973744
+}

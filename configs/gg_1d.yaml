@@ -1,0 +1,20 @@
+family: gg
+model_id: gg_1d
+name: GG 1D
+dim: 1
+
+box:
+  - [-3.0, 3.0]
+
+eval_box:
+  - [-2.0, 2.0]
+
+interval: [0.2, 1.0]
+rate_time: 0.6
+xi0: [0.0]
+
+m_s: [0.0]
+Sigma_s: [[1.0]]
+A: [[0.7]]
+b: [0.3]
+Sigma_eps: [[0.1225]]

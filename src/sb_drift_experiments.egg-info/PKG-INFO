@@ -1,0 +1,174 @@
+Metadata-Version: 2.4
+Name: sb-drift-experiments
+Version: 0.1.0
+Summary: Synthetic experiments for Schrodinger bridge drift estimation
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.26
+Requires-Dist: scipy>=1.11
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: pandas>=2.2
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
+# SB Drift Experiments
+
+This repo is the starting point for the synthetic experiments in Section 5 and Appendix G of the Schrödinger bridge drift paper.
+
+## What is included now
+
+This initial scaffold includes:
+
+- synthetic GG and MM families in `src/sbdrift/models.py`
+- deterministic truth computation for `d=1` and `d=2` in `src/sbdrift/truth_engine.py`
+- YAML configs in `configs/`
+- a pre-flight script in `scripts/00_preflight.py`
+- minimal tests in `tests/`
+
+It does **not** yet include the kernel estimator, Lepski selector, CLT runner, or final plotting scripts.
+
+## 1. Create the repo locally from scratch
+
+### Option A: start from this scaffold
+
+1. Download or copy this folder.
+2. Move into it:
+
+```bash
+cd sb-drift-experiments
+```
+
+### Option B: create a new GitHub repo first
+
+Create an empty GitHub repo, then clone it and copy these files into it.
+
+```bash
+git clone git@github.com:YOUR-USERNAME/sb-drift-experiments.git
+cd sb-drift-experiments
+```
+
+## 2. Create a Python environment
+
+Recommended: Python 3.11.
+
+### macOS / Linux
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e .
+pip install -r requirements.txt
+```
+
+### Windows PowerShell
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e .
+pip install -r requirements.txt
+```
+
+## 3. Run the tests
+
+```bash
+pytest
+```
+
+## 4. Run the pre-flight checks
+
+Run all configured models:
+
+```bash
+python scripts/00_preflight.py --config configs/common.yaml --all
+```
+
+Or a single model:
+
+```bash
+python scripts/00_preflight.py --config configs/gg_1d.yaml
+```
+
+Outputs will be written to:
+
+- `results/processed/preflight/*.md`
+- `results/processed/preflight/*.json`
+
+## 5. What the pre-flight checks do
+
+The pre-flight script checks:
+
+- that the model can sample inside the support box
+- the marginal density at the chosen conditioning point `xi0`
+- the minimum marginal density on the evaluation grid
+- the minimum denominator `D^*(t,x;xi0)` on the evaluation box at the rate time
+- one coarse-versus-fine truth convergence check
+
+This is the numerical gate before launching the real experiment scripts.
+
+## 6. Suggested Git workflow
+
+```bash
+git init
+git add .
+git commit -m "Initial scaffold for synthetic families and truth engine"
+```
+
+If the GitHub repo already exists:
+
+```bash
+git remote add origin git@github.com:YOUR-USERNAME/sb-drift-experiments.git
+git branch -M main
+git push -u origin main
+```
+
+## 7. Recommended branch discipline
+
+Use small topic branches:
+
+- `feature/preflight`
+- `feature/estimator`
+- `feature/rate-experiment`
+- `feature/clt-experiment`
+- `feature/figures`
+
+Example:
+
+```bash
+git checkout -b feature/preflight
+```
+
+## 8. Next coding milestones
+
+After this scaffold, implement in this order:
+
+1. `src/sbdrift/kernels.py`
+2. `src/sbdrift/estimator.py`
+3. `src/sbdrift/bandwidths.py`
+4. `scripts/01_rate.py`
+5. `scripts/02_adaptivity.py`
+6. `scripts/03_clt.py`
+7. `scripts/04_terminal_edge.py`
+8. `scripts/05_stress_test.py`
+9. `scripts/06_make_figures.py`
+10. `scripts/07_make_tables.py`
+
+## 9. Reproducibility goal
+
+The final repo should generate every paper artifact from saved outputs, not by manual editing.
+
+Target outputs:
+
+- `results/figures/figure1_rate.pdf`
+- `results/figures/figure2_clt_adaptivity.pdf`
+- `results/figures/figure3_terminal_edge.pdf`
+- `results/tables/table1_rate_slopes.tex`
+- `results/tables/table2_coverage.tex`
+
+## 10. Notes on scope
+
+The current truth engine is intentionally deterministic and currently supports `d=1` and `d=2`.
+That matches the main theorem-facing plan. If you later add an appendix-only moderate-dimensional sanity check, treat it separately and do not overload the main truth engine prematurely.

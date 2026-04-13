@@ -1,0 +1,130 @@
+[
+  {
+    "D_star_argmin": [
+      -2.0
+    ],
+    "D_star_min_on_eval_grid": 0.006140076725290309,
+    "dim": 1,
+    "model_id": "gg_1d",
+    "name": "GG 1D",
+    "rate_time": 0.6,
+    "sample_mean_xs": [
+      -0.0025441947297519737
+    ],
+    "sample_mean_xu": [
+      0.2876299080813779
+    ],
+    "support_accepts_sampling": true,
+    "truth_coarse": [
+      0.6504065040650405
+    ],
+    "truth_convergence_abs_err": 0.0,
+    "truth_fine": [
+      0.6504065040650405
+    ],
+    "xi0": [
+      0.0
+    ],
+    "xs_density_at_xi0": 0.40002225892128485,
+    "xs_density_min_on_eval_xi_grid": 0.0541371257120617
+  },
+  {
+    "D_star_argmin": [
+      -2.0,
+      2.0
+    ],
+    "D_star_min_on_eval_grid": 4.610800946559863e-05,
+    "dim": 2,
+    "model_id": "gg_2d",
+    "name": "GG 2D",
+    "rate_time": 0.6,
+    "sample_mean_xs": [
+      0.00617392426084024,
+      -0.0018881615496286032
+    ],
+    "sample_mean_xu": [
+      0.2731095035662283,
+      -0.17655299272100658
+    ],
+    "support_accepts_sampling": true,
+    "truth_coarse": [
+      0.5463595323532792,
+      -0.4525986804028248
+    ],
+    "truth_convergence_abs_err": 1.1102230246251565e-16,
+    "truth_fine": [
+      0.5463595323532792,
+      -0.4525986804028247
+    ],
+    "xi0": [
+      0.0,
+      0.0
+    ],
+    "xs_density_at_xi0": 0.1785645182393409,
+    "xs_density_min_on_eval_xi_grid": 0.001983672614973744
+  },
+  {
+    "D_star_argmin": [
+      2.0
+    ],
+    "D_star_min_on_eval_grid": 0.2997735475103362,
+    "dim": 1,
+    "model_id": "mm_1d",
+    "name": "MM 1D",
+    "rate_time": 0.6,
+    "sample_mean_xs": [
+      -0.14552015795368722
+    ],
+    "sample_mean_xu": [
+      0.5888421321857961
+    ],
+    "support_accepts_sampling": true,
+    "truth_coarse": [
+      -0.47091290307229977
+    ],
+    "truth_convergence_abs_err": 0.0,
+    "truth_fine": [
+      -0.47091290307229977
+    ],
+    "xi0": [
+      0.8
+    ],
+    "xs_density_at_xi0": 0.2986354064024771,
+    "xs_density_min_on_eval_xi_grid": 0.02532521546724008
+  },
+  {
+    "D_star_argmin": [
+      -2.0,
+      -2.0
+    ],
+    "D_star_min_on_eval_grid": 0.0002452503673312561,
+    "dim": 2,
+    "model_id": "mm_2d",
+    "name": "MM 2D",
+    "rate_time": 0.6,
+    "sample_mean_xs": [
+      -0.12354823876469599,
+      0.13280716753496055
+    ],
+    "sample_mean_xu": [
+      0.49415532979114823,
+      -0.575717007718261
+    ],
+    "support_accepts_sampling": true,
+    "truth_coarse": [
+      -1.2065958856210606,
+      1.278216723513223
+    ],
+    "truth_convergence_abs_err": 2.220446049250313e-16,
+    "truth_fine": [
+      -1.2065958856210606,
+      1.2782167235132227
+    ],
+    "xi0": [
+      0.8,
+      -0.8
+    ],
+    "xs_density_at_xi0": 0.31158789341287385,
+    "xs_density_min_on_eval_xi_grid": 4.394139676149609e-19
+  }
+]
