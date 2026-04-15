@@ -39,11 +39,9 @@ class RateConfig:
     h0: float
     q: float
     min_h_factor: float
-    kappa_pair: float
-    kappa_final: float
+    kappa: float
     selector_metric: str
     trim_frac: float
-    penalty_form: str
     tag: str
     seed: int
 
@@ -59,12 +57,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--h0", type=float, default=1.2)
     p.add_argument("--q", type=float, default=2 ** (-0.5))
     p.add_argument("--min-h-factor", type=float, default=1.0)
-    p.add_argument("--kappa-pair", type=float, default=2.0)
-    p.add_argument("--kappa-final", type=float, default=2.0)
+    p.add_argument("--kappa", type=float, default=2.0)
     p.add_argument("--beta-effective", type=float, default=2.0)
     p.add_argument("--selector-metric", type=str, choices=["ise", "raw_max", "trimmed_max"], default="raw_max")
     p.add_argument("--trim-frac", type=float, default=0.05)
-    p.add_argument("--penalty-form", type=str, choices=["one_sided", "two_sided"], default="one_sided")
     p.add_argument("--tag", type=str, default="")
     p.add_argument("--seed", type=int, default=12345)
     return p.parse_args()
@@ -80,13 +76,12 @@ def sanitize_tag(s: str) -> str:
     return s.replace(".", "p")
 
 
-def default_run_name(selector_metric: str, kappa_pair: float, kappa_final: float, trim_frac: float) -> str:
-    kp = str(kappa_pair).replace(".", "p")
-    kf = str(kappa_final).replace(".", "p")
+def default_run_name(selector_metric: str, kappa: float, trim_frac: float) -> str:
+    kappa_str = str(kappa).replace(".", "p")
     if selector_metric == "trimmed_max":
         tau_str = str(trim_frac).replace(".", "p")
-        return f"{selector_metric}_tau_{tau_str}_kp_{kp}_kf_{kf}"
-    return f"{selector_metric}_kp_{kp}_kf_{kf}"
+        return f"{selector_metric}_tau_{tau_str}_kappa_{kappa_str}"
+    return f"{selector_metric}_kappa_{kappa_str}"
 
 
 def grid_from_box(box: np.ndarray, n_per_dim: int) -> tuple[list[np.ndarray], np.ndarray]:
@@ -185,15 +180,12 @@ def select_lepski(
     hs: np.ndarray,
     M: int,
     dim: int,
-    kappa_pair: float,
-    kappa_final: float,
+    kappa: float,
     selector_metric: str,
     trim_frac: float,
-    penalty_form: str,
     axes: list[np.ndarray],
 ) -> float:
-    penalties_pair = {float(h): kappa_pair * math.sqrt(math.log(M) / (M * (h ** dim))) for h in hs}
-    penalties_final = {float(h): kappa_final * math.sqrt(math.log(M) / (M * (h ** dim))) for h in hs}
+    penalties = {float(h): kappa * math.sqrt(math.log(M) / (M * (h ** dim))) for h in hs}
     scores: dict[float, float] = {}
     for h in hs:
         candidates = []
@@ -207,15 +199,9 @@ def select_lepski(
                     dist = discrepancy_ise(est_by_h[float(hp)], est_by_h[float(h)], axes=axes)
                 else:
                     raise ValueError(f"Unknown selector_metric={selector_metric}")
-                if penalty_form == "one_sided":
-                    threshold = penalties_pair[float(hp)]
-                elif penalty_form == "two_sided":
-                    threshold = penalties_pair[float(hp)] + penalties_pair[float(h)]
-                else:
-                    raise ValueError(f"Unknown penalty_form={penalty_form}")
-                candidates.append(max(0.0, dist - threshold))
+                candidates.append(max(0.0, dist - penalties[float(hp)]))
         bias_proxy = max(candidates) if candidates else 0.0
-        scores[float(h)] = bias_proxy + penalties_final[float(h)]
+        scores[float(h)] = bias_proxy + penalties[float(h)]
     return min(scores, key=scores.get)
 
 
@@ -267,11 +253,9 @@ def write_summary(
         f"- h0: `{rcfg.h0}`",
         f"- q: `{rcfg.q}`",
         f"- min_h_factor: `{rcfg.min_h_factor}`",
-        f"- kappa_pair: `{rcfg.kappa_pair}`",
-        f"- kappa_final: `{rcfg.kappa_final}`",
+        f"- kappa: `{rcfg.kappa}`",
         f"- selector_metric: `{rcfg.selector_metric}`",
         f"- trim_frac: `{rcfg.trim_frac}`",
-        f"- penalty_form: `{rcfg.penalty_form}`",
         "",
         "## Theoretical benchmarks",
         "",
@@ -313,7 +297,7 @@ def run(args: argparse.Namespace) -> None:
     axes, x_grid = grid_from_box(eval_box, x_grid_per_dim)
     truth = get_truth(engine, str(cfg.get("model_id", cfg_path.stem)), t0, xi0, x_grid, x_grid_per_dim, truth_grid_2d)
 
-    run_name = sanitize_tag(args.tag) if args.tag.strip() else default_run_name(args.selector_metric, args.kappa_pair, args.kappa_final, args.trim_frac)
+    run_name = sanitize_tag(args.tag) if args.tag.strip() else default_run_name(args.selector_metric, args.kappa, args.trim_frac)
 
     rcfg = RateConfig(
         config_path=str(cfg_path),
@@ -330,11 +314,9 @@ def run(args: argparse.Namespace) -> None:
         h0=args.h0,
         q=args.q,
         min_h_factor=args.min_h_factor,
-        kappa_pair=args.kappa_pair,
-        kappa_final=args.kappa_final,
+        kappa=args.kappa,
         selector_metric=args.selector_metric,
         trim_frac=args.trim_frac,
-        penalty_form=args.penalty_form,
         tag=run_name,
         seed=args.seed,
     )
@@ -391,11 +373,9 @@ def run(args: argparse.Namespace) -> None:
                 hs=hs,
                 M=M,
                 dim=model.dim,
-                kappa_pair=args.kappa_pair,
-                kappa_final=args.kappa_final,
+                kappa=args.kappa,
                 selector_metric=args.selector_metric,
                 trim_frac=args.trim_frac,
-                penalty_form=args.penalty_form,
                 axes=axes,
             )
 

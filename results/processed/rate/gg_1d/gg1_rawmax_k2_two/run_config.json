@@ -1,0 +1,28 @@
+{
+  "beta_effective": 2.0,
+  "config_path": "/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/configs/gg_1d.yaml",
+  "dim": 1,
+  "h0": 1.2,
+  "kappa": 2.0,
+  "min_h_factor": 20.0,
+  "model_id": "gg_1d",
+  "name": "GG 1D",
+  "penalty_form": "two_sided",
+  "q": 0.7071067811865476,
+  "reps": 20,
+  "sample_sizes": [
+    1000,
+    2000,
+    4000
+  ],
+  "seed": 12345,
+  "selector_metric": "raw_max",
+  "t0": 0.6,
+  "tag": "gg1_rawmax_k2_two",
+  "trim_frac": 0.05,
+  "truth_grid_2d": 121,
+  "x_grid_per_dim": 200,
+  "xi0": [
+    0.0
+  ]
+}
