@@ -12,6 +12,10 @@ eval_box:
 interval: [0.2, 1.0]
 rate_time: 0.6
 xi0: [0.0]
+clt_point:
+  t0: 0.6
+  x0: [0.2]
+  xi0: [0.0]
 
 m_s: [0.0]
 Sigma_s: [[1.0]]
