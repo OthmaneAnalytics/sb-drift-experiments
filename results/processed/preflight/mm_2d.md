@@ -8,9 +8,9 @@
 - xs_density_min_on_eval_xi_grid: `4.918337e-09`
 - D_star_min_on_eval_grid: `8.261432e-03`
 - D_star_argmin: `[-1.5, -1.5]`
-- truth_convergence_abs_err: `2.220446e-16`
+- truth_convergence_abs_err: `0.000000e+00`
 - truth_coarse: `[-1.2065958856210606, 1.278216723513223]`
-- truth_fine: `[-1.2065958856210606, 1.2782167235132227]`
+- truth_fine: `[-1.2065958856210606, 1.278216723513223]`
 - sample_mean_xs: `[-0.09976941573108106, 0.1103510486113835]`
 - sample_mean_xu: `[0.3575178236561281, -0.40689163792406446]`
 - support_accepts_sampling: `True`

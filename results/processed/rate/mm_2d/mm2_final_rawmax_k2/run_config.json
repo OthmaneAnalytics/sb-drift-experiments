@@ -1,0 +1,31 @@
+{
+  "beta_effective": 2.0,
+  "config_path": "/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/configs/mm_2d.yaml",
+  "dim": 2,
+  "h0": 1.2,
+  "kappa_final": 2.0,
+  "kappa_pair": 2.0,
+  "min_h_factor": 5.0,
+  "model_id": "mm_2d",
+  "name": "MM 2D",
+  "penalty_form": "one_sided",
+  "q": 0.7071067811865476,
+  "reps": 20,
+  "sample_sizes": [
+    1000,
+    2000,
+    4000,
+    8000
+  ],
+  "seed": 12345,
+  "selector_metric": "raw_max",
+  "t0": 0.6,
+  "tag": "mm2_final_rawmax_k2",
+  "trim_frac": 0.05,
+  "truth_grid_2d": 121,
+  "x_grid_per_dim": 21,
+  "xi0": [
+    0.8,
+    -0.8
+  ]
+}
