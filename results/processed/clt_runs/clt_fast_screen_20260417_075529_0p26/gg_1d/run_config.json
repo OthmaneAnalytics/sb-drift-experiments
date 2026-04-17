@@ -1,0 +1,25 @@
+{
+  "alpha": 0.26,
+  "c": 1.0,
+  "config_path": "/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/configs/gg_1d.yaml",
+  "dim": 1,
+  "model_id": "gg_1d",
+  "name": "GG 1D",
+  "no_qq": true,
+  "out_tag": "clt_fast_screen_20260417_075529_0p26",
+  "progress_every": 25,
+  "qq_ms": [],
+  "reps": 150,
+  "sample_sizes": [
+    4000,
+    8000
+  ],
+  "seed": 20260417,
+  "t0": 0.6,
+  "x0": [
+    0.2
+  ],
+  "xi0": [
+    0.0
+  ]
+}
