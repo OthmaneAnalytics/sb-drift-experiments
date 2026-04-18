@@ -1,0 +1,41 @@
+family: mm
+model_id: mm_1d_wide_strong
+name: MM 1D wide-support strong stress
+dim: 1
+box:
+- - -5.0
+  - 5.0
+eval_box:
+- - -2.0
+  - 2.0
+interval:
+- 0.2
+- 1.0
+rate_time: 0.6
+xi0:
+- 0.8
+clt_point:
+  t0: 0.6
+  x0:
+  - 0.3
+  xi0:
+  - 0.8
+m1:
+- -1.2
+m2:
+- 1.2
+S: 0.64
+A1:
+- - 0.8
+b1:
+- 0.4
+Sigma1: 0.81
+A2:
+- - -0.5
+b2:
+- -0.3
+Sigma2: 1.0
+gate:
+  alpha0: 0.0
+  alpha:
+  - 1.5
