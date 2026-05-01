@@ -1,160 +1,74 @@
-# SB Drift Experiments
+# Schrödinger-Bridge Drift Estimation Experiments
 
-This repo is the starting point for the synthetic experiments in Section 5 and Appendix G of the Schrödinger bridge drift paper.
+This repository accompanies the paper on direct nonparametric estimation of Schrödinger-bridge drifts from a closed-form conditional-ratio representation.
 
-## What is included now
+It contains:
+- synthetic model definitions,
+- deterministic truth computation,
+- kernel drift estimators,
+- rate / CLT / adaptivity / stress-test drivers,
+- YAML configurations,
+- saved artifacts used for the paper figures and tables.
 
-This initial scaffold includes:
+## Repository layout
 
-- synthetic GG and MM families in `src/sbdrift/models.py`
-- deterministic truth computation for `d=1` and `d=2` in `src/sbdrift/truth_engine.py`
-- YAML configs in `configs/`
-- a pre-flight script in `scripts/00_preflight.py`
-- minimal tests in `tests/`
+- `src/sbdrift/` — core implementation
+- `configs/` — experiment configurations
+- `scripts/` — experiment drivers and summary scripts
+- `figures/` — paper-facing figures
+- `results/` — saved experiment outputs and summaries
 
-It does **not** yet include the kernel estimator, Lepski selector, CLT runner, or final plotting scripts.
+## Canonical paper-facing artifacts
 
-## 1. Create the repo locally from scratch
+The final paper primarily uses:
+- `results/processed/adapt_final/`
+- `results/processed/clt_runs/`
+- `results/processed/stress/latest/`
+- `figures/`
 
-### Option A: start from this scaffold
+See `results/README.md` for a guide to saved outputs.
 
-1. Download or copy this folder.
-2. Move into it:
+## Reproducing the main experiments
 
-```bash
-cd sb-drift-experiments
-```
-
-### Option B: create a new GitHub repo first
-
-Create an empty GitHub repo, then clone it and copy these files into it.
-
-```bash
-git clone git@github.com:YOUR-USERNAME/sb-drift-experiments.git
-cd sb-drift-experiments
-```
-
-## 2. Create a Python environment
-
-Recommended: Python 3.11.
-
-### macOS / Linux
-
-```bash
-python3.11 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -e .
-pip install -r requirements.txt
-```
-
-### Windows PowerShell
-
-```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -e .
-pip install -r requirements.txt
-```
-
-## 3. Run the tests
-
-```bash
-pytest
-```
-
-## 4. Run the pre-flight checks
-
-Run all configured models:
-
-```bash
-python scripts/00_preflight.py --config configs/common.yaml --all
-```
-
-Or a single model:
+Typical entry points are:
 
 ```bash
 python scripts/00_preflight.py --config configs/gg_1d.yaml
-```
+python scripts/01_rate.py --config configs/gg_1d.yaml ...
+python scripts/02_clt.py --config configs/gg_1d.yaml ...
+python scripts/03_stress_summary_raw_only.py
 
-Outputs will be written to:
-
-- `results/processed/preflight/*.md`
-- `results/processed/preflight/*.json`
-
-## 5. What the pre-flight checks do
-
-The pre-flight script checks:
-
-- that the model can sample inside the support box
-- the marginal density at the chosen conditioning point `xi0`
-- the minimum marginal density on the evaluation grid
-- the minimum denominator `D^*(t,x;xi0)` on the evaluation box at the rate time
-- one coarse-versus-fine truth convergence check
-
-This is the numerical gate before launching the real experiment scripts.
-
-## 6. Suggested Git workflow
+### 2) Add a results guide
 
 ```bash
-git init
-git add .
-git commit -m "Initial scaffold for synthetic families and truth engine"
-```
+mkdir -p results
 
-If the GitHub repo already exists:
+cat > results/README.md <<'MD'
+# Results directory guide
 
-```bash
-git remote add origin git@github.com:YOUR-USERNAME/sb-drift-experiments.git
-git branch -M main
-git push -u origin main
-```
+This directory contains both final paper-facing artifacts and some exploratory outputs.
 
-## 7. Recommended branch discipline
+## Canonical paper-facing outputs
 
-Use small topic branches:
+- `processed/adapt_final/` — final adaptivity summaries and tables
+- `processed/clt_runs/` — final CLT summaries and diagnostics
+- `processed/stress/latest/` — canonical bounded-support stress summary
+- `../figures/` — paper-facing figures
 
-- `feature/preflight`
-- `feature/estimator`
-- `feature/rate-experiment`
-- `feature/clt-experiment`
-- `feature/figures`
+## Raw experiment outputs
 
-Example:
+- `raw/rate/`
+- `raw/clt_runs/`
 
-```bash
-git checkout -b feature/preflight
-```
+These contain repetition-level saved outputs used to reconstruct summaries.
 
-## 8. Next coding milestones
+## Exploratory outputs
 
-After this scaffold, implement in this order:
+Some subdirectories correspond to timing probes, pilot runs, calibration runs, or superseded experiments. They are kept for transparency but are not part of the paper’s quantitative claims.
 
-1. `src/sbdrift/kernels.py`
-2. `src/sbdrift/estimator.py`
-3. `src/sbdrift/bandwidths.py`
-4. `scripts/01_rate.py`
-5. `scripts/02_adaptivity.py`
-6. `scripts/03_clt.py`
-7. `scripts/04_terminal_edge.py`
-8. `scripts/05_stress_test.py`
-9. `scripts/06_make_figures.py`
-10. `scripts/07_make_tables.py`
+## Recommendation
 
-## 9. Reproducibility goal
-
-The final repo should generate every paper artifact from saved outputs, not by manual editing.
-
-Target outputs:
-
-- `results/figures/figure1_rate.pdf`
-- `results/figures/figure2_clt_adaptivity.pdf`
-- `results/figures/figure3_terminal_edge.pdf`
-- `results/tables/table1_rate_slopes.tex`
-- `results/tables/table2_coverage.tex`
-
-## 10. Notes on scope
-
-The current truth engine is intentionally deterministic and currently supports `d=1` and `d=2`.
-That matches the main theorem-facing plan. If you later add an appendix-only moderate-dimensional sanity check, treat it separately and do not overload the main truth engine prematurely.
+For manuscript verification, start with:
+- `processed/adapt_final/`
+- `processed/clt_runs/`
+- `processed/stress/latest/`

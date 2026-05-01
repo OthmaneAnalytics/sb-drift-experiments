@@ -10,3 +10,10 @@ results/processed/clt_runs/timing_probe_*/
 results/figures/clt_runs/timing_probe_*/
 results/raw/rate/*/timing_probe_*/
 scripts/*.bak*
+
+# local timing probes and scratch artifacts
+results/raw/clt_runs/timing_probe_*/
+results/processed/clt_runs/timing_probe_*/
+results/figures/clt_runs/timing_probe_*/
+results/raw/rate/*/timing_probe_*/
+scripts/*.bak*
