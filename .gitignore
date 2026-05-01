@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+
+# Local timing probes and scratch outputs
+results/raw/clt_runs/timing_probe_*/
+results/processed/clt_runs/timing_probe_*/
+results/figures/clt_runs/timing_probe_*/
+results/raw/rate/*/timing_probe_*/
+scripts/*.bak*
