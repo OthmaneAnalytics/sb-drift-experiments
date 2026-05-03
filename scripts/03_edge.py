@@ -17,6 +17,7 @@ if str(SRC) not in sys.path:
 from sbdrift.models import load_model_from_config
 from sbdrift.truth_engine import TruthEngine
 from sbdrift.estimator import DriftEstimator
+import json
 
 
 def load_yaml(path: Path):
@@ -184,6 +185,38 @@ def plot_curves(outdir: Path, gg, mm):
     plt.close(fig)
 
 
+
+def _jsonable(obj):
+    import numpy as np
+    import pathlib
+
+    if isinstance(obj, dict):
+        return {str(k): _jsonable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_jsonable(v) for v in obj]
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, (np.integer, np.floating)):
+        return obj.item()
+    if isinstance(obj, pathlib.Path):
+        return str(obj)
+    return obj
+
+
+def save_plot_data(outdir: Path, gg, mm):
+    plot_dir = outdir / "plot_data"
+    plot_dir.mkdir(parents=True, exist_ok=True)
+
+    payload = {
+        "GG1": _jsonable(gg),
+        "MM1": _jsonable(mm),
+    }
+
+    pjson = plot_dir / "edge_plot_data.json"
+    pjson.write_text(json.dumps(payload, indent=2))
+    print(f"Wrote: {pjson}")
+
+
 def write_summary(outdir: Path, gg, mm):
     p = outdir / "edge_summary.md"
     lines = [
@@ -260,6 +293,7 @@ def main():
     outdir = ROOT / args.outdir
     plot_curves(outdir, gg, mm)
     write_summary(outdir, gg, mm)
+    save_plot_data(outdir, gg, mm)
     print(f"Wrote: {outdir / 'edge_error.pdf'}")
     print(f"Wrote: {outdir / 'edge_rescaled.pdf'}")
     print(f"Wrote: {outdir / 'edge_error_sup.pdf'}")
