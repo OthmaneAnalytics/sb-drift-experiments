@@ -1,0 +1,17 @@
+M,method,y,source_run,model_id
+1000,lepski,0.523643010099877,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+2000,lepski,0.4757768331497787,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+4000,lepski,0.6406517239304513,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+8000,lepski,0.3671244619595682,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+1000,oracle,0.2343623073577411,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+2000,oracle,0.2027866426379442,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+4000,oracle,0.1363926121436784,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+8000,oracle,0.1085763093516823,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_1d/mm1_final_rawmax_k2,mm_1d
+1000,lepski,1.178172690607972,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+2000,lepski,1.2355353271560443,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+4000,lepski,1.0431594814774166,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+8000,lepski,0.7684646199998822,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+1000,oracle,0.6990735401919241,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+2000,oracle,0.5585509448773447,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+4000,oracle,0.4373552668605539,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
+8000,oracle,0.3110137056295575,/home/marbelstone/github/OthmaneAnalytics/sb-drift-experiments/results/processed/rate/mm_2d/mm2_final_rawmax_k2,mm_2d
