@@ -153,8 +153,19 @@ def asymptotic_theory_slope(beta: float, dim: int) -> float:
 
 def finite_range_theory_slope(sample_sizes: list[int], beta: float, dim: int) -> float:
     M1, M2 = min(sample_sizes), max(sample_sizes)
+
+    # A secant slope is undefined when only one sample size is used,
+    # as in small smoke tests. Full experiments use multiple values of M.
+    if M1 == M2:
+        return float("nan")
+
     p = beta / (2.0 * beta + dim)
-    return float(-p + p * math.log(math.log(M2) / math.log(M1)) / math.log(M2 / M1))
+    return float(
+        -p
+        + p
+        * math.log(math.log(M2) / math.log(M1))
+        / math.log(M2 / M1)
+    )
 
 
 def fit_loglog_slope(df: pd.DataFrame, ycol: str) -> tuple[float, float]:
@@ -361,14 +372,102 @@ def run(args: argparse.Namespace) -> None:
             est_by_h: dict[float, np.ndarray] = {}
             sup_err_by_h: dict[float, float] = {}
             ise_by_h: dict[float, float] = {}
+            diagnostics_by_h: dict[float, dict[str, float | int]] = {}
 
             for h in hs:
-                ah = np.asarray(est.a_hat_grid(t=t0, x_grid=x_grid, xi=xi0, h=float(h)), dtype=float)
-                est_by_h[float(h)] = ah
+                h_value = float(h)
+
+                ah_raw, details = est.a_hat_grid(
+                    t=t0,
+                    x_grid=x_grid,
+                    xi=xi0,
+                    h=h_value,
+                    return_details=True,
+                )
+                ah = np.asarray(ah_raw, dtype=float)
+
+                fhat = float(details["f_hat"])
+                g1hat = np.asarray(
+                    details["g1_hat"],
+                    dtype=float,
+                ).reshape(-1)
+                Dhat = np.asarray(
+                    details["D_hat"],
+                    dtype=float,
+                ).reshape(-1)
+                kernel_weights = np.asarray(
+                    details["kernel_weights"],
+                    dtype=float,
+                ).reshape(-1)
+
+                f_floor_mask = np.isclose(
+                    fhat,
+                    1.0e-12,
+                    rtol=0.0,
+                    atol=1.0e-15,
+                )
+                D_floor_mask = np.isclose(
+                    Dhat,
+                    1.0e-12,
+                    rtol=0.0,
+                    atol=1.0e-15,
+                )
+
+                sum_weights = float(np.sum(kernel_weights))
+                sum_squared_weights = float(
+                    np.sum(kernel_weights**2)
+                )
+                kernel_weight_ess = (
+                    sum_weights**2 / sum_squared_weights
+                    if sum_squared_weights > 0.0
+                    else 0.0
+                )
+
+                diagnostics = {
+                    "Mh_to_d": float(
+                        M * (h_value ** model.dim)
+                    ),
+                    "f_hat": fhat,
+                    "f_floor_hit": int(f_floor_mask),
+                    "n_kernel_positive": int(
+                        np.count_nonzero(kernel_weights > 0.0)
+                    ),
+                    "p_kernel_positive": float(
+                        np.mean(kernel_weights > 0.0)
+                    ),
+                    "sum_kernel_weights": sum_weights,
+                    "kernel_weight_ess": float(
+                        kernel_weight_ess
+                    ),
+                    "min_g1_hat": float(np.min(g1hat)),
+                    "median_g1_hat": float(
+                        np.median(g1hat)
+                    ),
+                    "max_g1_hat": float(np.max(g1hat)),
+                    "min_D_hat": float(np.min(Dhat)),
+                    "q01_D_hat": float(
+                        np.quantile(Dhat, 0.01)
+                    ),
+                    "median_D_hat": float(
+                        np.median(Dhat)
+                    ),
+                    "max_D_hat": float(np.max(Dhat)),
+                    "n_D_floor_grid": int(
+                        np.count_nonzero(D_floor_mask)
+                    ),
+                    "p_D_floor_grid": float(
+                        np.mean(D_floor_mask)
+                    ),
+                }
+
+                est_by_h[h_value] = ah
+                diagnostics_by_h[h_value] = diagnostics
+
                 sup_err = sup_grid_error(ah, truth)
                 ise = vector_field_ise(ah, truth, axes)
-                sup_err_by_h[float(h)] = sup_err
-                ise_by_h[float(h)] = ise
+                sup_err_by_h[h_value] = sup_err
+                ise_by_h[h_value] = ise
+
                 per_h_rows.append(
                     {
                         "model_id": rcfg.model_id,
@@ -379,9 +478,10 @@ def run(args: argparse.Namespace) -> None:
                         "M": M,
                         "rep": rep,
                         "seed": int(rep_seed),
-                        "h": float(h),
+                        "h": h_value,
                         "sup_err": float(sup_err),
                         "ise": float(ise),
+                        **diagnostics,
                     }
                 )
 
@@ -399,18 +499,12 @@ def run(args: argparse.Namespace) -> None:
                 axes=axes,
             )
 
-            details_lepski = est.point_details(t=t0, x=x_grid[0], xi=xi0, h=float(h_lepski))
-            fhat_lepski = float(details_lepski["f_hat"])
-            Dhat_grid_lepski = np.asarray(
-                est.a_hat_grid(t=t0, x_grid=x_grid, xi=xi0, h=float(h_lepski), return_details=True)[1]["D_hat"],
-                dtype=float,
-            )
-            details_oracle = est.point_details(t=t0, x=x_grid[0], xi=xi0, h=float(h_oracle))
-            fhat_oracle = float(details_oracle["f_hat"])
-            Dhat_grid_oracle = np.asarray(
-                est.a_hat_grid(t=t0, x_grid=x_grid, xi=xi0, h=float(h_oracle), return_details=True)[1]["D_hat"],
-                dtype=float,
-            )
+            diagnostics_lepski = diagnostics_by_h[
+                float(h_lepski)
+            ]
+            diagnostics_oracle = diagnostics_by_h[
+                float(h_oracle)
+            ]
 
             oracle_sup = float(sup_err_by_h[h_oracle])
             lepski_sup = float(sup_err_by_h[h_lepski])
@@ -432,8 +526,7 @@ def run(args: argparse.Namespace) -> None:
                         "ise": float(ise_by_h[h_oracle]),
                         "boundary": int(abs(h_oracle - min_h) < 1e-12 or abs(h_oracle - max_h) < 1e-12),
                         "gap_to_oracle": 1.0,
-                        "f_hat": fhat_oracle,
-                        "min_D_hat": float(np.min(Dhat_grid_oracle)),
+                        **diagnostics_oracle,
                     },
                     {
                         "model_id": rcfg.model_id,
@@ -450,8 +543,7 @@ def run(args: argparse.Namespace) -> None:
                         "ise": float(ise_by_h[h_lepski]),
                         "boundary": int(abs(h_lepski - min_h) < 1e-12 or abs(h_lepski - max_h) < 1e-12),
                         "gap_to_oracle": float(lepski_sup / oracle_sup),
-                        "f_hat": fhat_lepski,
-                        "min_D_hat": float(np.min(Dhat_grid_lepski)),
+                        **diagnostics_lepski,
                     },
                 ]
             )
