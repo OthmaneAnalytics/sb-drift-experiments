@@ -1,0 +1,48 @@
+Table 4 provenance audit
+========================
+
+GG1
+  paper oracle h:          0.242760
+  baseline oracle h:       0.242760
+  floor-81 oracle h:       0.257125
+  oracle matches baseline: True
+  oracle matches floor-81: False
+  adaptive matches floor-81: True
+  boundary matches floor-81: True
+  Cavg matches floor-81: True
+  Cmax matches floor-81: True
+
+GG2
+  paper oracle h:          0.376363
+  baseline oracle h:       0.376363
+  floor-81 oracle h:       0.382623
+  oracle matches baseline: True
+  oracle matches floor-81: False
+  adaptive matches floor-81: True
+  boundary matches floor-81: True
+  Cavg matches floor-81: True
+  Cmax matches floor-81: True
+
+MM1
+  paper oracle h:          0.238186
+  baseline oracle h:       0.238186
+  floor-81 oracle h:       0.243252
+  oracle matches baseline: True
+  oracle matches floor-81: False
+  adaptive matches floor-81: True
+  boundary matches floor-81: True
+  Cavg matches floor-81: True
+  Cmax matches floor-81: True
+
+MM2
+  paper oracle h:          0.398902
+  baseline oracle h:       0.398902
+  floor-81 oracle h:       0.413312
+  oracle matches baseline: True
+  oracle matches floor-81: False
+  adaptive matches floor-81: True
+  boundary matches floor-81: True
+  Cavg matches floor-81: True
+  Cmax matches floor-81: True
+
+Conclusion: CONFIRMED HYBRID ASSEMBLY

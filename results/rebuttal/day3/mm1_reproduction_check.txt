@@ -1,0 +1,9 @@
+MM1 rate reproduction verification
+Normalized configuration: PASS
+
+slopes.csv: PASS; max_abs_diff=2.887e-15
+mean_sup_err.csv: PASS; max_abs_diff=8.327e-17
+mean_ise.csv: PASS; max_abs_diff=0.000e+00
+bandwidth_diagnostics.csv: PASS; max_abs_diff=4.441e-16
+
+Overall: PASS

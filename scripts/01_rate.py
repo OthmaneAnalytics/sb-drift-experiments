@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import math
+import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 import re
@@ -11,6 +14,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scipy
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -36,6 +40,7 @@ class RateConfig:
     xi0: list[float]
     x_grid_per_dim: int
     truth_grid_2d: int
+    truth_cache_mode: str
     h0: float
     q: float
     min_h_factor: float
@@ -56,6 +61,16 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--x-grid-1d", type=int, default=200)
     p.add_argument("--x-grid-2d", type=int, default=21)
     p.add_argument("--truth-grid-2d", type=int, default=121)
+    p.add_argument(
+        "--truth-cache-mode",
+        type=str,
+        choices=["use", "refresh", "off"],
+        default="use",
+        help=(
+            "Truth-cache behavior: use a validated cache when available, "
+            "refresh it unconditionally, or disable cache reads and writes."
+        ),
+    )
     p.add_argument("--h0", type=float, default=1.2)
     p.add_argument("--q", type=float, default=2 ** (-0.5))
     p.add_argument("--min-h-factor", type=float, default=1.0)
@@ -153,30 +168,260 @@ def asymptotic_theory_slope(beta: float, dim: int) -> float:
 
 def finite_range_theory_slope(sample_sizes: list[int], beta: float, dim: int) -> float:
     M1, M2 = min(sample_sizes), max(sample_sizes)
+
+    # A secant slope is undefined when only one sample size is used,
+    # as in small smoke tests. Full experiments use multiple values of M.
+    if M1 == M2:
+        return float("nan")
+
     p = beta / (2.0 * beta + dim)
-    return float(-p + p * math.log(math.log(M2) / math.log(M1)) / math.log(M2 / M1))
+    return float(
+        -p
+        + p
+        * math.log(math.log(M2) / math.log(M1))
+        / math.log(M2 / M1)
+    )
 
 
 def fit_loglog_slope(df: pd.DataFrame, ycol: str) -> tuple[float, float]:
+    if len(df) < 2 or df["M"].nunique() < 2:
+        return float("nan"), float("nan")
+
     x = np.log(df["M"].to_numpy(dtype=float))
     y = np.log(df[ycol].to_numpy(dtype=float))
     slope, intercept = np.polyfit(x, y, deg=1)
     return float(slope), float(intercept)
 
 
-def make_truth_cache_path(model_id: str, t0: float, xi0: np.ndarray, n_grid: int) -> Path:
-    xi_tag = "_".join(f"{v:+.3f}" for v in xi0)
-    return ROOT / "results" / "processed" / "rate" / "truth_cache" / f"{model_id}_t{t0:.3f}_xi{xi_tag}_n{n_grid}.npz"
+TRUTH_CACHE_SCHEMA_VERSION = 2
 
 
-def get_truth(engine: TruthEngine, model_id: str, t0: float, xi0: np.ndarray, x_grid: np.ndarray, n_grid: int, truth_grid_2d: int) -> np.ndarray:
-    cache_path = make_truth_cache_path(model_id, t0, xi0, n_grid)
+def _sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    return _sha256_bytes(path.read_bytes())
+
+
+def _canonical_json(data: object) -> str:
+    return json.dumps(
+        data,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    )
+
+
+def truth_cache_metadata(
+    *,
+    cfg: dict,
+    model_id: str,
+    t0: float,
+    xi0: np.ndarray,
+    x_grid: np.ndarray,
+    truth_grid_2d: int,
+) -> dict[str, object]:
+    xi_array = np.asarray(xi0, dtype=np.float64).reshape(-1)
+    grid_array = np.ascontiguousarray(
+        np.asarray(x_grid, dtype=np.float64)
+    )
+
+    config_json = _canonical_json(cfg)
+
+    metadata: dict[str, object] = {
+        "schema_version": TRUTH_CACHE_SCHEMA_VERSION,
+        "model_id": str(model_id),
+        "t0": float(t0),
+        "xi0": xi_array.tolist(),
+        "x_grid_shape": list(grid_array.shape),
+        "x_grid_sha256": _sha256_bytes(grid_array.tobytes()),
+        "truth_grid_2d": int(truth_grid_2d),
+        "config_sha256": _sha256_bytes(
+            config_json.encode("utf-8")
+        ),
+        "truth_engine_sha256": _sha256_file(
+            SRC / "sbdrift" / "truth_engine.py"
+        ),
+        "models_sha256": _sha256_file(
+            SRC / "sbdrift" / "models.py"
+        ),
+        "numpy_version": np.__version__,
+        "scipy_version": scipy.__version__,
+        "python_version": list(sys.version_info[:3]),
+    }
+
+    digest_payload = _canonical_json(metadata).encode("utf-8")
+    metadata["digest"] = _sha256_bytes(digest_payload)[:24]
+
+    return metadata
+
+
+def make_truth_cache_path(
+    metadata: dict[str, object],
+) -> Path:
+    model_id = re.sub(
+        r"[^A-Za-z0-9._-]+",
+        "_",
+        str(metadata["model_id"]),
+    )
+    digest = str(metadata["digest"])
+
+    return (
+        ROOT
+        / "results"
+        / "processed"
+        / "rate"
+        / "truth_cache"
+        / (
+            f"v{TRUTH_CACHE_SCHEMA_VERSION}_"
+            f"{model_id}_{digest}.npz"
+        )
+    )
+
+
+def _load_validated_truth_cache(
+    cache_path: Path,
+    expected_metadata: dict[str, object],
+    expected_shape: tuple[int, int],
+) -> np.ndarray | None:
+    try:
+        with np.load(cache_path, allow_pickle=False) as data:
+            if "truth" not in data or "metadata_json" not in data:
+                return None
+
+            truth = np.asarray(data["truth"], dtype=float)
+            metadata_json = str(data["metadata_json"].item())
+            stored_metadata = json.loads(metadata_json)
+
+        if stored_metadata != expected_metadata:
+            return None
+
+        if truth.shape != expected_shape:
+            return None
+
+        if not np.all(np.isfinite(truth)):
+            return None
+
+        return truth
+
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        json.JSONDecodeError,
+    ):
+        return None
+
+
+def _save_truth_cache_atomic(
+    cache_path: Path,
+    truth: np.ndarray,
+    metadata: dict[str, object],
+) -> None:
     ensure_dir(cache_path.parent)
-    if cache_path.exists():
-        return np.asarray(np.load(cache_path)["truth"], dtype=float)
-    vals = [engine.a_star(t0, x=x, xi=xi0, grid_points_2d=truth_grid_2d) for x in x_grid]
+
+    temporary_path = cache_path.with_name(
+        f".{cache_path.name}.{os.getpid()}.tmp"
+    )
+
+    try:
+        with temporary_path.open("wb") as handle:
+            np.savez_compressed(
+                handle,
+                truth=np.asarray(truth, dtype=float),
+                metadata_json=np.array(
+                    _canonical_json(metadata)
+                ),
+            )
+
+        temporary_path.replace(cache_path)
+
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+
+def get_truth(
+    engine: TruthEngine,
+    cfg: dict,
+    model_id: str,
+    t0: float,
+    xi0: np.ndarray,
+    x_grid: np.ndarray,
+    truth_grid_2d: int,
+    cache_mode: str = "use",
+) -> np.ndarray:
+    if cache_mode not in {"use", "refresh", "off"}:
+        raise ValueError(
+            "cache_mode must be one of: use, refresh, off"
+        )
+
+    grid_array = np.asarray(x_grid, dtype=float)
+    expected_shape = (
+        len(grid_array),
+        int(engine.model.dim),
+    )
+
+    metadata = truth_cache_metadata(
+        cfg=cfg,
+        model_id=model_id,
+        t0=t0,
+        xi0=xi0,
+        x_grid=grid_array,
+        truth_grid_2d=truth_grid_2d,
+    )
+    cache_path = make_truth_cache_path(metadata)
+
+    if cache_mode == "use" and cache_path.exists():
+        cached = _load_validated_truth_cache(
+            cache_path,
+            expected_metadata=metadata,
+            expected_shape=expected_shape,
+        )
+
+        if cached is not None:
+            print(f"[truth-cache] hit: {cache_path}")
+            return cached
+
+        print(
+            "[truth-cache] invalid cache; recomputing: "
+            f"{cache_path}"
+        )
+
+    vals = [
+        engine.a_star(
+            t0,
+            x=x,
+            xi=xi0,
+            grid_points_2d=truth_grid_2d,
+        )
+        for x in grid_array
+    ]
     truth = np.asarray(vals, dtype=float)
-    np.savez(cache_path, truth=truth)
+
+    if truth.shape != expected_shape:
+        raise RuntimeError(
+            "Computed truth has unexpected shape: "
+            f"{truth.shape}, expected {expected_shape}"
+        )
+
+    if not np.all(np.isfinite(truth)):
+        raise RuntimeError(
+            "Computed truth contains nonfinite values."
+        )
+
+    if cache_mode != "off":
+        _save_truth_cache_atomic(
+            cache_path,
+            truth=truth,
+            metadata=metadata,
+        )
+        print(f"[truth-cache] wrote: {cache_path}")
+    else:
+        print("[truth-cache] disabled")
+
     return truth
 
 
@@ -264,6 +509,7 @@ def write_summary(
         f"- xi0: `{rcfg.xi0}`",
         f"- x_grid_per_dim: `{rcfg.x_grid_per_dim}`",
         f"- truth_grid_2d: `{rcfg.truth_grid_2d}`",
+        f"- truth_cache_mode: `{rcfg.truth_cache_mode}`",
         f"- h0: `{rcfg.h0}`",
         f"- q: `{rcfg.q}`",
         f"- min_h_factor: `{rcfg.min_h_factor}`",
@@ -311,7 +557,16 @@ def run(args: argparse.Namespace) -> None:
     xi0 = np.asarray(cfg["xi0"], dtype=float)
     eval_box = np.asarray(cfg["eval_box"], dtype=float)
     axes, x_grid = grid_from_box(eval_box, x_grid_per_dim)
-    truth = get_truth(engine, str(cfg.get("model_id", cfg_path.stem)), t0, xi0, x_grid, x_grid_per_dim, truth_grid_2d)
+    truth = get_truth(
+        engine=engine,
+        cfg=cfg,
+        model_id=str(cfg.get("model_id", cfg_path.stem)),
+        t0=t0,
+        xi0=xi0,
+        x_grid=x_grid,
+        truth_grid_2d=truth_grid_2d,
+        cache_mode=args.truth_cache_mode,
+    )
 
     run_name = sanitize_tag(args.tag) if args.tag.strip() else default_run_name(args.selector_metric, args.kappa_pair, args.kappa_final, args.trim_frac)
 
@@ -327,6 +582,7 @@ def run(args: argparse.Namespace) -> None:
         xi0=xi0.tolist(),
         x_grid_per_dim=x_grid_per_dim,
         truth_grid_2d=truth_grid_2d,
+        truth_cache_mode=args.truth_cache_mode,
         h0=args.h0,
         q=args.q,
         min_h_factor=args.min_h_factor,
@@ -361,14 +617,102 @@ def run(args: argparse.Namespace) -> None:
             est_by_h: dict[float, np.ndarray] = {}
             sup_err_by_h: dict[float, float] = {}
             ise_by_h: dict[float, float] = {}
+            diagnostics_by_h: dict[float, dict[str, float | int]] = {}
 
             for h in hs:
-                ah = np.asarray(est.a_hat_grid(t=t0, x_grid=x_grid, xi=xi0, h=float(h)), dtype=float)
-                est_by_h[float(h)] = ah
+                h_value = float(h)
+
+                ah_raw, details = est.a_hat_grid(
+                    t=t0,
+                    x_grid=x_grid,
+                    xi=xi0,
+                    h=h_value,
+                    return_details=True,
+                )
+                ah = np.asarray(ah_raw, dtype=float)
+
+                fhat = float(details["f_hat"])
+                g1hat = np.asarray(
+                    details["g1_hat"],
+                    dtype=float,
+                ).reshape(-1)
+                Dhat = np.asarray(
+                    details["D_hat"],
+                    dtype=float,
+                ).reshape(-1)
+                kernel_weights = np.asarray(
+                    details["kernel_weights"],
+                    dtype=float,
+                ).reshape(-1)
+
+                f_floor_mask = np.isclose(
+                    fhat,
+                    1.0e-12,
+                    rtol=0.0,
+                    atol=1.0e-15,
+                )
+                D_floor_mask = np.isclose(
+                    Dhat,
+                    1.0e-12,
+                    rtol=0.0,
+                    atol=1.0e-15,
+                )
+
+                sum_weights = float(np.sum(kernel_weights))
+                sum_squared_weights = float(
+                    np.sum(kernel_weights**2)
+                )
+                kernel_weight_ess = (
+                    sum_weights**2 / sum_squared_weights
+                    if sum_squared_weights > 0.0
+                    else 0.0
+                )
+
+                diagnostics = {
+                    "Mh_to_d": float(
+                        M * (h_value ** model.dim)
+                    ),
+                    "f_hat": fhat,
+                    "f_floor_hit": int(f_floor_mask),
+                    "n_kernel_positive": int(
+                        np.count_nonzero(kernel_weights > 0.0)
+                    ),
+                    "p_kernel_positive": float(
+                        np.mean(kernel_weights > 0.0)
+                    ),
+                    "sum_kernel_weights": sum_weights,
+                    "kernel_weight_ess": float(
+                        kernel_weight_ess
+                    ),
+                    "min_g1_hat": float(np.min(g1hat)),
+                    "median_g1_hat": float(
+                        np.median(g1hat)
+                    ),
+                    "max_g1_hat": float(np.max(g1hat)),
+                    "min_D_hat": float(np.min(Dhat)),
+                    "q01_D_hat": float(
+                        np.quantile(Dhat, 0.01)
+                    ),
+                    "median_D_hat": float(
+                        np.median(Dhat)
+                    ),
+                    "max_D_hat": float(np.max(Dhat)),
+                    "n_D_floor_grid": int(
+                        np.count_nonzero(D_floor_mask)
+                    ),
+                    "p_D_floor_grid": float(
+                        np.mean(D_floor_mask)
+                    ),
+                }
+
+                est_by_h[h_value] = ah
+                diagnostics_by_h[h_value] = diagnostics
+
                 sup_err = sup_grid_error(ah, truth)
                 ise = vector_field_ise(ah, truth, axes)
-                sup_err_by_h[float(h)] = sup_err
-                ise_by_h[float(h)] = ise
+                sup_err_by_h[h_value] = sup_err
+                ise_by_h[h_value] = ise
+
                 per_h_rows.append(
                     {
                         "model_id": rcfg.model_id,
@@ -379,9 +723,10 @@ def run(args: argparse.Namespace) -> None:
                         "M": M,
                         "rep": rep,
                         "seed": int(rep_seed),
-                        "h": float(h),
+                        "h": h_value,
                         "sup_err": float(sup_err),
                         "ise": float(ise),
+                        **diagnostics,
                     }
                 )
 
@@ -399,18 +744,12 @@ def run(args: argparse.Namespace) -> None:
                 axes=axes,
             )
 
-            details_lepski = est.point_details(t=t0, x=x_grid[0], xi=xi0, h=float(h_lepski))
-            fhat_lepski = float(details_lepski["f_hat"])
-            Dhat_grid_lepski = np.asarray(
-                est.a_hat_grid(t=t0, x_grid=x_grid, xi=xi0, h=float(h_lepski), return_details=True)[1]["D_hat"],
-                dtype=float,
-            )
-            details_oracle = est.point_details(t=t0, x=x_grid[0], xi=xi0, h=float(h_oracle))
-            fhat_oracle = float(details_oracle["f_hat"])
-            Dhat_grid_oracle = np.asarray(
-                est.a_hat_grid(t=t0, x_grid=x_grid, xi=xi0, h=float(h_oracle), return_details=True)[1]["D_hat"],
-                dtype=float,
-            )
+            diagnostics_lepski = diagnostics_by_h[
+                float(h_lepski)
+            ]
+            diagnostics_oracle = diagnostics_by_h[
+                float(h_oracle)
+            ]
 
             oracle_sup = float(sup_err_by_h[h_oracle])
             lepski_sup = float(sup_err_by_h[h_lepski])
@@ -432,8 +771,7 @@ def run(args: argparse.Namespace) -> None:
                         "ise": float(ise_by_h[h_oracle]),
                         "boundary": int(abs(h_oracle - min_h) < 1e-12 or abs(h_oracle - max_h) < 1e-12),
                         "gap_to_oracle": 1.0,
-                        "f_hat": fhat_oracle,
-                        "min_D_hat": float(np.min(Dhat_grid_oracle)),
+                        **diagnostics_oracle,
                     },
                     {
                         "model_id": rcfg.model_id,
@@ -450,8 +788,7 @@ def run(args: argparse.Namespace) -> None:
                         "ise": float(ise_by_h[h_lepski]),
                         "boundary": int(abs(h_lepski - min_h) < 1e-12 or abs(h_lepski - max_h) < 1e-12),
                         "gap_to_oracle": float(lepski_sup / oracle_sup),
-                        "f_hat": fhat_lepski,
-                        "min_D_hat": float(np.min(Dhat_grid_lepski)),
+                        **diagnostics_lepski,
                     },
                 ]
             )
