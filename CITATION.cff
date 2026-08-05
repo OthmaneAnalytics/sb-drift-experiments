@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated paper."
+title: "Schrödinger-Bridge Drift Estimation Experiments"
+type: software
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/OthmaneAnalytics/sb-drift-experiments"
+url: "https://arxiv.org/abs/2605.05432"
+authors:
+  - family-names: "Mazhar"
+    given-names: "Othmane"
+    orcid: "https://orcid.org/0000-0003-1521-9091"
+  - family-names: "Pham"
+    given-names: "Huyên"
+preferred-citation:
+  type: article
+  title: "Direct Estimation of Schrödinger Bridge Time-Series Drifts: Finite-Sample, Asymptotic, and Adaptive Guarantees"
+  authors:
+    - family-names: "Mazhar"
+      given-names: "Othmane"
+      orcid: "https://orcid.org/0000-0003-1521-9091"
+    - family-names: "Pham"
+      given-names: "Huyên"
+  year: 2026
+  url: "https://arxiv.org/abs/2605.05432"
